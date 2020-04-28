@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Template</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link rel="stylesheet" href="./index.css"/>
+		<script type="text/javascript" src="./qwebchannel.js"></script>
+		<style type="text/css">
+			.container{
+				display: block;
+				width: 90%;
+			}
+			.slider-box{
+				display: inline-block;
+				width: 70%;
+				padding-top: 10px;
+			}
+			.label{
+				display: inline-block;
+				width: 20%;
+				height: 50px;
+				line-height: 50px;
+				position: relative;
+				top: -20px;
+				padding-left: 20px;
+			}
+			.label-item{
+				display: inline-block;
+				text-align:center;
+				background-color: #2d85e1;
+				border: 2px solid #fff;
+				color:white;
+				position: relative;
+				padding-top: 4px;
+				padding-bottom: 4px;
+				font-size: 20px;
+				width:auto;
+			}
+			.time-label{
+				position: relative;
+				display: inline-block;
+				text-align:center;
+				color:#2d85e1;
+				font-weight: bold;
+				font-size: 20px;
+				width:100px;
+			}
+			.inner-label-l{
+				display: none;
+				position: absolute;
+				font-weight: bold;
+				top:-24px;
+				left: -20px;
+				color:#2d85e1;
+			}
+			.inner-label-r{
+				display: none;
+				position: absolute;
+				font-weight: bold;
+				top:-24px;
+				right: -20px;
+				color:#2d85e1;
+			}	
+		</style>
+	</head>
+	<body >
+		<div style="padding-top: 40px;padding-left: 30px;padding-right: 30px;width: 100%;">
+			<div class="container" id="time-container">
+				
+			</div>
+			<div class="container" id="item-container">
+			</div>
+			<p style="font-size: 30px;color:#2d85e1;font-weight: bold;width: 100%;text-align: center;padding-top: 40px;" id="msg"></p>
+		</div>
+<!--		<p id="send">sendsend</p>-->
+		<script src="./jquery.min.js"></script>
+		<script type="text/javascript" src="./index.js"></script>
+		<script>
+// 			$('#slider').slide({
+// 				range: true,
+// 				ratio: '100',
+// 				value: [0, 100],
+// 				clickBack: function(res){
+// 					console.log(res)
+// 					console.log();
+// 					var itemStr="<div style='display: inline-block;text-align:center;padding: 10px;background-color: cadetblue;color:white;width:100px;'>ccccc</div>";
+// 					$("#item-container").append(itemStr);
+// 				}
+// 			})
+			function addLabel(_name,_start,_end,_total){
+				var widthNum=$("#item-container").width()*((_end-_start)/_total);
+				var leftNum=$("#item-container").width()*(_start/_total)
+				var labelChilds=$("#item-container").children();
+				for(var i=0;i<labelChilds.length;i++){
+					leftNum=leftNum-$(labelChilds[i]).width();
+				}
+				var itemStr="<div class='label-item' style='width:"+widthNum+"px;left:"+leftNum+"px;'><span class='inner-label-l'>"+formatTime(_start)+"</span>"+_name+"<span class='inner-label-r'>"+formatTime(_end)+"</span>"+"</div>";
+				$("#item-container").append(itemStr);
+			}
+			var showTimes="";
+			function addTime(_time,_totalTime){
+				var tmpTimes="#"+_time+"#";
+				if(showTimes.indexOf(tmpTimes)>-1){
+					return;
+				}
+				showTimes=showTimes+tmpTimes;
+				var takeNum=_time/_totalTime;
+				var leftPx=$("#time-container").width()*takeNum-50-(100*$(".time-label").length);
+				var minStr=formatTime(_time)
+				var timeItem='<span class="time-label" style="left: '+leftPx+'px;">'+minStr+'</span>';
+				$("#time-container").append(timeItem);
+			}
+			function formatTime(_time){
+				return parseInt(_time/60)+":"+(_time%60)
+			}
+// 			$(function(){
+// 				addTime(0,150);
+// 				addTime(150,150);
+// 				addLabel('测试c50505ece',0,50,150)
+// 				addLabel('测试cece',50,75,150)
+// 			})
+		function sortLabel(a,b){
+		  return a.start-b.start;
+		}
+		
+		$('#item-container').on('mouseenter', '.label-item', function() {//绑定鼠标进入事件
+			$(this).find("span").show();
+		});
+		$('#item-container').on('mouseleave', '.label-item', function() {//绑定鼠标划出事件
+			$(this).find("span").hide();
+		});
+		window.onload = function(){
+            new QWebChannel(qt.webChannelTransport, function(channel) 
+			{
+                //Get Qt interact object  
+                var interactObj = channel.objects.interactObj; 
+                
+                //Web send message to Qt 
+<!--                document.getElementById("send").onclick = function() -->
+<!--				{-->
+<!--                    var inputVal="web page";-->
+<!--					alert("Send string to Qt: " + inputVal);  -->
+<!--                    -->
+<!--                    //Web use the interface of Qt -->
+<!--					interactObj.fun(alert);-->
+<!--                    interactObj.JSSendMessage(inputVal); -->
+<!--                }  -->
+                
+                //Web connect the Qt signal, then Qt can call "output" function
+                interactObj.SigSendMessageToJS.connect(function(str) {
+					
+					if(str=="0"){
+						//开始
+						$("#msg").html("Is processing ...");
+						return;
+					}
+					if(str=="1"){
+						//结束
+						$("#msg").html("Done success ...");
+						return;
+					}
+
+                    labelArr=JSON.parse(str)
+					labelArr.sort(sortLabel)
+					showTimes="";
+					$("#item-container").html("");
+					$("#time-container").html("");
+					addTime(0,labelArr[0].total);
+					addTime(labelArr[0].total,labelArr[0].total);
+					for(var i=0;i<labelArr.length;i++){
+// 						addTime(labelArr[i].start,labelArr[i].total);
+// 						addTime(labelArr[i].end,labelArr[i].total);
+// 						addTime(labelArr[i].total,labelArr[i].total);
+						addLabel(labelArr[i].label,labelArr[i].start,labelArr[i].end,labelArr[i].total)
+					}
+                });    
+            });  
+        }
+		
+	</script>
+	</body>
+
+</html>
