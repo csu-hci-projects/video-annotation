@@ -188,7 +188,7 @@ class login(QWidget):
         self.save_btn.clicked.connect(self.doEdit)
 
         #exit button
-        self.cancle_btn = QPushButton('cancle',self)
+        self.cancle_btn = QPushButton('cancel',self)
         self.cancle_btn.move(230,670)
         self.cancle_btn.resize(140, 30)
         self.cancle_btn.clicked.connect(QCoreApplication.quit)
